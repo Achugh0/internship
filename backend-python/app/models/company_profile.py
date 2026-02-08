@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, DateTime, Boolean, Text, Integer, ForeignKey
 from sqlalchemy.sql import func
 from app.db.base_class import Base
+from datetime import datetime
 import uuid
 
 class CompanyProfile(Base):
@@ -59,5 +60,5 @@ class CompanyProfile(Base):
     hr_designation = Column(String)
     
     # Timestamps
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
