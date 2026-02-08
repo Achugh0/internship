@@ -3,6 +3,7 @@ from app.db.session import engine
 from app.models.user import User
 from app.models.internship import Internship
 from app.models.application import Application
+from app.models.company_profile import CompanyProfile
 
 async def init_db():
     # Create all tables

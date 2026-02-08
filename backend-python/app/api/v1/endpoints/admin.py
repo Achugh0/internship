@@ -169,7 +169,12 @@ async def update_user(
         raise HTTPException(status_code=404, detail="User not found")
     
     if user_data.email:
+        # Check if email already exists
+        existing = db.query(User).filter(User.email == user_data.email, User.id != user_id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already in use")
         user.email = user_data.email
+    
     if user_data.full_name:
         user.full_name = user_data.full_name
     if user_data.is_active is not None:
@@ -189,6 +194,23 @@ async def update_user(
         "is_verified": user.is_verified,
         "created_at": user.created_at.isoformat()
     }
+
+@router.post("/users/{user_id}/reset-password")
+async def reset_user_password(
+    user_id: str,
+    new_password: str,
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Reset user password (admin only)"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.hashed_password = get_password_hash(new_password)
+    db.commit()
+    
+    return {"message": "Password reset successfully"}
 
 @router.delete("/users/{user_id}")
 async def delete_user(
@@ -376,3 +398,158 @@ async def import_users_csv(
         "errors": errors,
         "created_users": created_users
     }
+
+
+# Company Profile Management
+from app.models.company_profile import CompanyProfile
+from datetime import datetime
+
+class CompanyProfileResponse(BaseModel):
+    id: str
+    user_id: str
+    company_name: str
+    email: str
+    phone: Optional[str]
+    city: Optional[str]
+    industry: Optional[str]
+    verification_status: str
+    is_active: bool
+    created_at: str
+
+@router.get("/companies/pending", response_model=List[CompanyProfileResponse])
+async def get_pending_companies(
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Get companies pending verification"""
+    profiles = db.query(CompanyProfile).filter(
+        CompanyProfile.verification_status == 'pending'
+    ).all()
+    
+    result = []
+    for profile in profiles:
+        user = db.query(User).filter(User.id == profile.user_id).first()
+        if user:
+            result.append({
+                "id": profile.id,
+                "user_id": profile.user_id,
+                "company_name": profile.company_name,
+                "email": user.email,
+                "phone": profile.phone,
+                "city": profile.city,
+                "industry": profile.industry,
+                "verification_status": profile.verification_status,
+                "is_active": user.is_active,
+                "created_at": profile.created_at.isoformat()
+            })
+    
+    return result
+
+@router.get("/companies/{user_id}/profile")
+async def get_company_profile(
+    user_id: str,
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Get detailed company profile"""
+    profile = db.query(CompanyProfile).filter(CompanyProfile.user_id == user_id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Company profile not found")
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    
+    return {
+        "user": {
+            "id": str(user.id),
+            "email": user.email,
+            "is_active": user.is_active,
+            "is_verified": user.is_verified,
+            "created_at": user.created_at.isoformat()
+        },
+        "profile": {
+            "company_name": profile.company_name,
+            "legal_name": profile.legal_name,
+            "registration_number": profile.registration_number,
+            "gst_number": profile.gst_number,
+            "pan_number": profile.pan_number,
+            "website": profile.website,
+            "phone": profile.phone,
+            "address_line1": profile.address_line1,
+            "address_line2": profile.address_line2,
+            "city": profile.city,
+            "state": profile.state,
+            "pincode": profile.pincode,
+            "industry": profile.industry,
+            "company_size": profile.company_size,
+            "founded_year": profile.founded_year,
+            "description": profile.description,
+            "linkedin_url": profile.linkedin_url,
+            "twitter_url": profile.twitter_url,
+            "hr_name": profile.hr_name,
+            "hr_email": profile.hr_email,
+            "hr_phone": profile.hr_phone,
+            "hr_designation": profile.hr_designation,
+            "verification_status": profile.verification_status,
+            "verification_notes": profile.verification_notes,
+            "rejection_reason": profile.rejection_reason
+        }
+    }
+
+@router.post("/companies/{user_id}/approve")
+async def approve_company(
+    user_id: str,
+    notes: Optional[str] = None,
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Approve company registration"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    profile = db.query(CompanyProfile).filter(CompanyProfile.user_id == user_id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Company profile not found")
+    
+    # Activate user account
+    user.is_active = True
+    user.is_verified = True
+    
+    # Update profile
+    profile.verification_status = 'verified'
+    profile.verified_by = str(current_user.id)
+    profile.verified_at = datetime.utcnow()
+    if notes:
+        profile.verification_notes = notes
+    
+    db.commit()
+    
+    return {"message": "Company approved successfully"}
+
+@router.post("/companies/{user_id}/reject")
+async def reject_company(
+    user_id: str,
+    reason: str,
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Reject company registration"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    profile = db.query(CompanyProfile).filter(CompanyProfile.user_id == user_id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Company profile not found")
+    
+    # Keep user inactive
+    user.is_active = False
+    user.is_verified = False
+    
+    # Update profile
+    profile.verification_status = 'rejected'
+    profile.rejection_reason = reason
+    
+    db.commit()
+    
+    return {"message": "Company rejected"}
