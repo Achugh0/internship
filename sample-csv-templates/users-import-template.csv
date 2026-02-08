@@ -1,0 +1,6 @@
+email,password,full_name,role
+student1@example.com,ChangeMe123,John Doe,student
+student2@example.com,ChangeMe123,Jane Smith,student
+company1@example.com,ChangeMe123,Tech Corp,company
+company2@example.com,ChangeMe123,Startup Inc,company
+admin1@example.com,ChangeMe123,Admin User,admin

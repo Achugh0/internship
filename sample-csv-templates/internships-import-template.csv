@@ -1,0 +1,4 @@
+company_id,title,description,stipend_amount,duration_months,work_mode,location,positions
+user-uuid-here,Full Stack Developer Intern,Build web applications using React and Node.js,15000,6,remote,Bangalore,2
+user-uuid-here,Data Science Intern,Work on ML models and data analysis,20000,3,hybrid,Mumbai,1
+user-uuid-here,Marketing Intern,Digital marketing and social media management,10000,6,office,Delhi,3

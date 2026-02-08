@@ -1,15 +1,8 @@
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import hashlib
 from app.core.config import settings
-
-# Use bcrypt with proper configuration
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto",
-    bcrypt__rounds=12
-)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -22,21 +15,18 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify password using SHA256"""
     try:
-        # Truncate password to 72 bytes for bcrypt compatibility
-        if len(plain_password.encode('utf-8')) > 72:
-            plain_password = plain_password[:72]
-        return pwd_context.verify(plain_password, hashed_password)
+        password_hash = hashlib.sha256(plain_password.encode()).hexdigest()
+        return password_hash == hashed_password
     except Exception as e:
         print(f"Password verification error: {e}")
         return False
 
 def get_password_hash(password: str) -> str:
+    """Hash password using SHA256"""
     try:
-        # Truncate password to 72 bytes for bcrypt compatibility
-        if len(password.encode('utf-8')) > 72:
-            password = password[:72]
-        return pwd_context.hash(password)
+        return hashlib.sha256(password.encode()).hexdigest()
     except Exception as e:
         print(f"Password hashing error: {e}")
         raise

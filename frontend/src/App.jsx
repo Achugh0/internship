@@ -14,6 +14,9 @@ import CompanyProfile from './pages/company/Profile';
 import PostInternship from './pages/company/PostInternship';
 import AdminLogin from './pages/admin/Login';
 import AdminDashboard from './pages/admin/Dashboard';
+import AdminUsers from './pages/admin/Users';
+import AdminCompanies from './pages/admin/Companies';
+import AdminReports from './pages/admin/Reports';
 import InternshipList from './pages/InternshipList';
 import InternshipDetail from './pages/InternshipDetail';
 
@@ -81,6 +84,21 @@ function App() {
           <Route path="dashboard" element={
             <ProtectedRoute allowedRoles={['admin', 'super_admin', 'moderator']}>
               <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="users" element={
+            <ProtectedRoute allowedRoles={['admin', 'super_admin', 'moderator']}>
+              <AdminUsers />
+            </ProtectedRoute>
+          } />
+          <Route path="companies" element={
+            <ProtectedRoute allowedRoles={['admin', 'super_admin', 'moderator']}>
+              <AdminCompanies />
+            </ProtectedRoute>
+          } />
+          <Route path="reports" element={
+            <ProtectedRoute allowedRoles={['admin', 'super_admin', 'moderator']}>
+              <AdminReports />
             </ProtectedRoute>
           } />
         </Route>

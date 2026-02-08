@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 export default function CompanyDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -25,12 +27,24 @@ export default function CompanyDashboard() {
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
         <div className="space-y-3">
-          <button className="w-full bg-primary text-white py-3 px-6 rounded hover:bg-blue-600">
+          <Link 
+            to="/company/post-internship"
+            className="block w-full bg-blue-600 text-white py-3 px-6 rounded hover:bg-blue-700 text-center font-semibold"
+          >
             Post New Internship
-          </button>
-          <button className="w-full bg-gray-200 text-gray-700 py-3 px-6 rounded hover:bg-gray-300">
+          </Link>
+          <Link 
+            to="/company/internships"
+            className="block w-full bg-gray-200 text-gray-700 py-3 px-6 rounded hover:bg-gray-300 text-center font-semibold"
+          >
+            View My Internships
+          </Link>
+          <Link 
+            to="/company/applications"
+            className="block w-full bg-gray-200 text-gray-700 py-3 px-6 rounded hover:bg-gray-300 text-center font-semibold"
+          >
             View Applications
-          </button>
+          </Link>
         </div>
       </div>
     </div>
