@@ -114,61 +114,68 @@ async def register_student(user_data: UserRegister, db: Session = Depends(get_db
 
 @router.post("/register/company")
 async def register_company(company_data: CompanyRegister, db: Session = Depends(get_db)):
-    # Check if user exists
-    existing_user = db.query(User).filter(User.email == company_data.email).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    
-    # Create user account (inactive until admin approves)
-    user = User(
-        email=company_data.email,
-        hashed_password=get_password_hash(company_data.password),
-        full_name=company_data.company_name,
-        role=UserRole.COMPANY,
-        login_portal="company",
-        is_active=False,  # Inactive until admin approval
-        is_verified=False  # Not verified until admin approval
-    )
-    db.add(user)
-    db.flush()  # Get user ID without committing
-    
-    # Create company profile
-    company_profile = CompanyProfile(
-        user_id=str(user.id),
-        company_name=company_data.company_name,
-        legal_name=company_data.legal_name,
-        registration_number=company_data.registration_number,
-        gst_number=company_data.gst_number,
-        pan_number=company_data.pan_number,
-        website=company_data.website,
-        phone=company_data.phone,
-        alternate_email=company_data.alternate_email,
-        address_line1=company_data.address_line1,
-        address_line2=company_data.address_line2,
-        city=company_data.city,
-        state=company_data.state,
-        country=company_data.country,
-        pincode=company_data.pincode,
-        industry=company_data.industry,
-        company_size=company_data.company_size,
-        founded_year=company_data.founded_year,
-        description=company_data.description,
-        linkedin_url=company_data.linkedin_url,
-        twitter_url=company_data.twitter_url,
-        hr_name=company_data.hr_name,
-        hr_email=company_data.hr_email,
-        hr_phone=company_data.hr_phone,
-        hr_designation=company_data.hr_designation,
-        verification_status='pending'
-    )
-    db.add(company_profile)
-    db.commit()
-    
-    return {
-        "message": "Registration successful! Your account is pending admin approval. You will receive an email notification once approved.",
-        "email": user.email,
-        "status": "pending_approval"
-    }
+    try:
+        # Check if user exists
+        existing_user = db.query(User).filter(User.email == company_data.email).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        # Create user account (inactive until admin approves)
+        user = User(
+            email=company_data.email,
+            hashed_password=get_password_hash(company_data.password),
+            full_name=company_data.company_name,
+            role=UserRole.COMPANY,
+            login_portal="company",
+            is_active=False,  # Inactive until admin approval
+            is_verified=False  # Not verified until admin approval
+        )
+        db.add(user)
+        db.flush()  # Get user ID without committing
+        
+        # Create company profile
+        company_profile = CompanyProfile(
+            user_id=str(user.id),
+            company_name=company_data.company_name,
+            legal_name=company_data.legal_name,
+            registration_number=company_data.registration_number,
+            gst_number=company_data.gst_number,
+            pan_number=company_data.pan_number,
+            website=company_data.website,
+            phone=company_data.phone,
+            alternate_email=company_data.alternate_email,
+            address_line1=company_data.address_line1,
+            address_line2=company_data.address_line2,
+            city=company_data.city,
+            state=company_data.state,
+            country=company_data.country,
+            pincode=company_data.pincode,
+            industry=company_data.industry,
+            company_size=company_data.company_size,
+            founded_year=company_data.founded_year,
+            description=company_data.description,
+            linkedin_url=company_data.linkedin_url,
+            twitter_url=company_data.twitter_url,
+            hr_name=company_data.hr_name,
+            hr_email=company_data.hr_email,
+            hr_phone=company_data.hr_phone,
+            hr_designation=company_data.hr_designation,
+            verification_status='pending'
+        )
+        db.add(company_profile)
+        db.commit()
+        
+        return {
+            "message": "Registration successful! Your account is pending admin approval. You will receive an email notification once approved.",
+            "email": user.email,
+            "status": "pending_approval"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"Registration error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
 @router.post("/login/student", response_model=Token)
 async def login_student(credentials: UserLogin, db: Session = Depends(get_db)):

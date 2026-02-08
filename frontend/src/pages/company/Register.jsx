@@ -54,12 +54,14 @@ export default function CompanyRegister() {
       const response = await api.post('/auth/register/company', data);
       return response.data;
     },
-    onSuccess: () => {
-      alert('Registration successful! Your account is pending admin approval. You will be notified via email once approved.');
+    onSuccess: (data) => {
+      alert(data.message || 'Registration successful! Your account is pending admin approval. You will be notified via email once approved.');
       navigate('/company/login');
     },
     onError: (error) => {
-      alert(error.response?.data?.detail || 'Registration failed');
+      console.error('Registration error:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Registration failed. Please try again.';
+      alert(errorMessage);
     }
   });
 
