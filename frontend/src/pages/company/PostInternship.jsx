@@ -8,37 +8,47 @@ export default function PostInternship() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    requirements: { skills: [], education: '', experience: '' },
-    details: {
-      stipend: { amount: '', currency: 'INR' },
-      duration: { value: '', unit: 'months' },
-      workMode: 'remote',
-      location: '',
-      hoursPerWeek: '',
-      positions: 1
-    },
-    learningOutcomes: []
+    stipend_amount: '',
+    duration_months: '',
+    work_mode: 'remote',
+    location: '',
+    hours_per_week: '',
+    positions: 1,
+    required_skills: '',
+    education: '',
+    experience: ''
   });
 
   const postMutation = useMutation({
     mutationFn: async (data) => {
-      return await api.post('/internships', data);
+      const response = await api.post('/internships/', data);
+      return response.data;
     },
     onSuccess: () => {
-      alert('Internship posted successfully! Pending review.');
+      alert('Internship posted successfully! Pending admin review.');
       navigate('/company/dashboard');
+    },
+    onError: (error) => {
+      alert(error.response?.data?.detail || 'Failed to post internship');
     }
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    postMutation.mutate(formData);
+    postMutation.mutate({
+      ...formData,
+      stipend_amount: parseFloat(formData.stipend_amount),
+      duration_months: parseInt(formData.duration_months),
+      hours_per_week: formData.hours_per_week ? parseInt(formData.hours_per_week) : null,
+      positions: parseInt(formData.positions)
+    });
   };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-3xl font-bold mb-6">Post New Internship</h1>
+        <h1 className="text-3xl font-bold mb-2">Post New Internship</h1>
+        <p className="text-gray-600 mb-6">Fill in the details below to create a new internship posting</p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -48,7 +58,7 @@ export default function PostInternship() {
               required
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
               placeholder="e.g., Full Stack Developer Intern"
             />
           </div>
@@ -60,7 +70,7 @@ export default function PostInternship() {
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={6}
-              className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
               placeholder="Describe the role, responsibilities, and what the intern will learn..."
             />
           </div>
@@ -71,12 +81,10 @@ export default function PostInternship() {
               <input
                 type="number"
                 required
-                value={formData.details.stipend.amount}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  details: { ...formData.details, stipend: { ...formData.details.stipend, amount: e.target.value }}
-                })}
-                className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+                value={formData.stipend_amount}
+                onChange={(e) => setFormData({ ...formData, stipend_amount: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                placeholder="10000"
               />
             </div>
 
@@ -85,12 +93,10 @@ export default function PostInternship() {
               <input
                 type="number"
                 required
-                value={formData.details.duration.value}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  details: { ...formData.details, duration: { ...formData.details.duration, value: e.target.value }}
-                })}
-                className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+                value={formData.duration_months}
+                onChange={(e) => setFormData({ ...formData, duration_months: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                placeholder="3"
               />
             </div>
 
@@ -98,12 +104,9 @@ export default function PostInternship() {
               <label className="block text-sm font-medium mb-2">Work Mode *</label>
               <select
                 required
-                value={formData.details.workMode}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  details: { ...formData.details, workMode: e.target.value }
-                })}
-                className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+                value={formData.work_mode}
+                onChange={(e) => setFormData({ ...formData, work_mode: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
               >
                 <option value="remote">Remote</option>
                 <option value="hybrid">Hybrid</option>
@@ -115,12 +118,9 @@ export default function PostInternship() {
               <label className="block text-sm font-medium mb-2">Location</label>
               <input
                 type="text"
-                value={formData.details.location}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  details: { ...formData.details, location: e.target.value }
-                })}
-                className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                 placeholder="City, State"
               />
             </div>
@@ -129,36 +129,75 @@ export default function PostInternship() {
               <label className="block text-sm font-medium mb-2">Hours per Week</label>
               <input
                 type="number"
-                value={formData.details.hoursPerWeek}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  details: { ...formData.details, hoursPerWeek: e.target.value }
-                })}
-                className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+                value={formData.hours_per_week}
+                onChange={(e) => setFormData({ ...formData, hours_per_week: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                placeholder="40"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Number of Positions</label>
+              <label className="block text-sm font-medium mb-2">Number of Positions *</label>
               <input
                 type="number"
-                value={formData.details.positions}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  details: { ...formData.details, positions: e.target.value }
-                })}
-                className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+                required
+                value={formData.positions}
+                onChange={(e) => setFormData({ ...formData, positions: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                placeholder="1"
               />
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={postMutation.isPending}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-          >
-            {postMutation.isPending ? 'Posting...' : 'Post Internship'}
-          </button>
+          <div>
+            <label className="block text-sm font-medium mb-2">Required Skills</label>
+            <input
+              type="text"
+              value={formData.required_skills}
+              onChange={(e) => setFormData({ ...formData, required_skills: e.target.value })}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+              placeholder="React, Node.js, MongoDB"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Education Requirements</label>
+            <input
+              type="text"
+              value={formData.education}
+              onChange={(e) => setFormData({ ...formData, education: e.target.value })}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+              placeholder="Bachelor's in Computer Science or related field"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Experience Required</label>
+            <input
+              type="text"
+              value={formData.experience}
+              onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+              placeholder="0-1 years"
+            />
+          </div>
+
+          <div className="flex gap-4">
+            <button
+              type="submit"
+              disabled={postMutation.isPending}
+              className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 font-semibold"
+            >
+              {postMutation.isPending ? 'Posting...' : 'Post Internship'}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/company/dashboard')}
+              className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+          </div>
         </form>
       </div>
     </div>
